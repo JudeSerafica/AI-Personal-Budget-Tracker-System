@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useTheme } from '@/lib/theme-context';
 
 interface Transaction {
   id: string;
@@ -28,8 +29,9 @@ import { predefinedCategories } from '@/lib/categories';
 const categories = predefinedCategories;
 
 export default function TransactionsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+   const router = useRouter();
+   const { theme } = useTheme();
+   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -310,17 +312,17 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
-          {user && (
-            <Button onClick={openAddDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Transaction
-            </Button>
-          )}
-        </div>
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+         {user && (
+           <Button onClick={openAddDialog} className="w-full sm:w-auto">
+             <Plus className="h-4 w-4 mr-2" />
+             Add Transaction
+           </Button>
+         )}
+       </div>
 
         <Card>
           <CardHeader>
@@ -328,65 +330,65 @@ export default function TransactionsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
-                      {transaction.type === 'income' ? (
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="secondary">{transaction.category}</Badge>
-                        <span className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : ''}{formatCurrency(convertAmount(Math.abs(transaction.amount), 'USD', 'PHP'), 'PHP')} PHP
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatCurrency(Math.abs(transaction.amount), 'USD')} USD
-                      </p>
-                    </div>
-                    {user && (
-                      <>
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(transaction)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this transaction? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(transaction.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+               {transactions.map((transaction) => (
+                 <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-4">
+                   <div className="flex items-center space-x-4 flex-1">
+                     <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
+                       {transaction.type === 'income' ? (
+                         <TrendingUp className="h-4 w-4 text-green-600" />
+                       ) : (
+                         <TrendingDown className="h-4 w-4 text-red-600" />
+                       )}
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <p className="font-medium truncate text-gray-900 dark:text-white">{transaction.description}</p>
+                       <div className="flex flex-wrap items-center gap-2 mt-1">
+                         <Badge variant="secondary" className="text-xs">{transaction.category}</Badge>
+                         <span className="text-sm text-gray-500 dark:text-gray-400">{new Date(transaction.date).toLocaleDateString()}</span>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="flex items-center justify-between sm:justify-end gap-4">
+                     <div className="text-left sm:text-right">
+                       <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                         {transaction.type === 'income' ? '+' : ''}{formatCurrency(convertAmount(Math.abs(transaction.amount), 'USD', 'PHP'), 'PHP')} PHP
+                       </p>
+                       <p className="text-xs text-gray-500">
+                         {formatCurrency(Math.abs(transaction.amount), 'USD')} USD
+                       </p>
+                     </div>
+                     {user && (
+                       <div className="flex gap-2">
+                         <Button variant="outline" size="sm" onClick={() => handleEdit(transaction)}>
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button variant="outline" size="sm">
+                               <Trash2 className="h-4 w-4" />
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 Are you sure you want to delete this transaction? This action cannot be undone.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction onClick={() => handleDelete(transaction.id)}>
+                                 Delete
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               ))}
+             </div>
           </CardContent>
         </Card>
 

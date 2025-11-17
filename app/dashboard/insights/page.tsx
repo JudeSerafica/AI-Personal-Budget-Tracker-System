@@ -7,6 +7,7 @@ import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2 } from 'lucide-rea
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTheme } from '@/lib/theme-context';
 
 interface Transaction {
   id: string;
@@ -40,8 +41,9 @@ const THRESHOLDS = {
 };
 
 export default function InsightsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+   const router = useRouter();
+   const { theme } = useTheme();
+   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -346,11 +348,11 @@ export default function InsightsPage() {
 
   if (transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center space-x-4 mb-8">
             <Brain className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-900">AI Spending Insights</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Spending Insights</h1>
           </div>
           <Card>
             <CardContent className="py-8">
@@ -367,13 +369,15 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center space-x-4 mb-8">
-          <Brain className="h-8 w-8 text-indigo-600" />
-          <h1 className="text-3xl font-bold text-gray-900">AI Spending Insights</h1>
-          {aiLoading && <span className="text-sm text-gray-500">(Generating AI insights...)</span>}
-        </div>
+         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+           <div className="flex items-center space-x-4">
+             <Brain className="h-8 w-8 text-indigo-600" />
+             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Spending Insights</h1>
+           </div>
+           {aiLoading && <span className="text-sm text-gray-500 dark:text-gray-400">(Generating AI insights...)</span>}
+         </div>
 
         {aiError && (
           <Alert className="mb-6">

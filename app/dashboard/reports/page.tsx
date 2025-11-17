@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/lib/theme-context';
 
 interface Transaction {
   id: string;
@@ -20,7 +21,7 @@ interface Transaction {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 // Currency conversion
-const USD_TO_PHP = 58.96;
+const USD_TO_PHP = 56.5;
 
 // Format currency with comma separators
 const formatCurrency = (amount: number): string => {
@@ -33,14 +34,20 @@ const formatCurrency = (amount: number): string => {
 };
 
 export default function ReportsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+   const router = useRouter();
+   const { theme } = useTheme();
+   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
+
+  const filteredTransactions = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
 
   useEffect(() => {
     checkUser();
@@ -88,7 +95,7 @@ export default function ReportsPage() {
     }
   };
 
-  const expensesByCategory = transactions
+  const expensesByCategory = filteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((acc, t) => {
       const category = t.category;
@@ -119,8 +126,8 @@ export default function ReportsPage() {
       return { month: monthName, income: values.income, expenses: values.expenses };
     });
 
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
-  const totalExpenses = Math.abs(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
+  const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
+  const totalExpenses = Math.abs(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
 
   if (loading) {
     return (
@@ -134,9 +141,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Monthly Reports</h1>
+         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">Monthly Reports</h1>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -146,7 +153,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
-              <p className="text-sm text-gray-500">All time</p>
+              <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
 
@@ -156,7 +163,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
-              <p className="text-sm text-gray-500">All time</p>
+              <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
 
@@ -166,7 +173,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalIncome - totalExpenses)}</div>
-              <p className="text-sm text-gray-500">All time</p>
+              <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
         </div>

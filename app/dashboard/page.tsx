@@ -1,14 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart3, TrendingUp, TrendingDown, Plus, Wallet, PieChart, MessageSquare, Brain, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Plus, Wallet, PieChart, MessageSquare, Brain, Loader2, Sun, Moon, Menu } from 'lucide-react';
+import { useTheme } from '@/lib/theme-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, Cell } from 'recharts';
 
 interface Transaction {
   id: string;
@@ -20,20 +24,19 @@ interface Transaction {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+   const router = useRouter();
+   const pathname = usePathname();
+   const { theme, toggleTheme } = useTheme();
+   const [user, setUser] = useState<any>(null);
+   const [transactions, setTransactions] = useState<Transaction[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const channelRef = useRef<any>(null);
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-
-  useEffect(() => {
-    checkUser();
-    fetchTransactions();
-  }, []);
+  const currentDay = currentDate.getDate();
 
   const checkUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -78,6 +81,41 @@ export default function DashboardPage() {
     }
   };
 
+  const filteredTransactions = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  useEffect(() => {
+    checkUser();
+    fetchTransactions();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
+      channelRef.current = supabase
+        .channel('transactions_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `userId=eq.${user.id}`,
+        }, (payload) => {
+          console.log('Transaction change:', payload);
+          fetchTransactions();
+        })
+        .subscribe();
+    }
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
+    };
+  }, [user]);
+
   // Currency conversion
   const USD_TO_PHP = 56.5;
 
@@ -91,10 +129,40 @@ export default function DashboardPage() {
     return `${symbol}${formatted}`;
   };
 
-  // Calculate totals for all transactions (amounts stored in USD, convert to PHP)
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
-  const totalExpenses = Math.abs(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
+  // Calculate totals for current month transactions (amounts stored in USD, convert to PHP)
+  const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
+  const totalExpenses = Math.abs(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
   const totalBalance = totalIncome - totalExpenses;
+
+  // Calculate daily net for current month
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const monthDays: string[] = [];
+  for (let i = 1; i <= daysInMonth; i++) {
+    const d = new Date(currentYear, currentMonth, i);
+    monthDays.push(d.toISOString().split('T')[0]);
+  }
+
+  const dailyNet = monthDays.map(date => {
+    const dayTransactions = transactions.filter(t => t.date.startsWith(date));
+    const income = dayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
+    const expenses = Math.abs(dayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
+    return income - expenses;
+  });
+
+  const maxAbsNet = Math.max(...dailyNet.map(Math.abs));
+  const chartHeights = dailyNet.map(net => maxAbsNet === 0 ? 0 : (Math.abs(net) / maxAbsNet) * 100);
+
+  const chartData = monthDays.map((date, i) => {
+    const day = i + 1;
+    const net = dailyNet[i];
+    return { day, net };
+  });
+
+  const chartConfig = {
+    net: {
+      label: "Net Amount",
+    },
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -113,62 +181,86 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <Wallet className="h-8 w-8 text-indigo-600" />
-              <h1 className="text-2xl font-bold text-gray-900">BudgetAI Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BudgetAI Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline">Sign Out</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Sign Out</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to sign out of your BudgetAI account?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSignOut}>
-                      Sign Out
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            <div className="hidden md:flex items-center space-x-4">
+               <button
+                 onClick={toggleTheme}
+                 className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+               >
+                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+               </button>
+               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
+               <AlertDialog>
+                 <AlertDialogTrigger asChild>
+                   <Button variant="outline">Sign Out</Button>
+                 </AlertDialogTrigger>
+                 <AlertDialogContent>
+                   <AlertDialogHeader>
+                     <AlertDialogTitle>Sign Out</AlertDialogTitle>
+                     <AlertDialogDescription>
+                       Are you sure you want to sign out of your BudgetAI account?
+                     </AlertDialogDescription>
+                   </AlertDialogHeader>
+                   <AlertDialogFooter>
+                     <AlertDialogCancel>Cancel</AlertDialogCancel>
+                     <AlertDialogAction onClick={handleSignOut}>
+                       Sign Out
+                     </AlertDialogAction>
+                   </AlertDialogFooter>
+                 </AlertDialogContent>
+               </AlertDialog>
+             </div>
+             <button
+               className="md:hidden p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+               onClick={() => setIsMobileMenuOpen(true)}
+             >
+               <Menu size={24} />
+             </button>
           </div>
           </div>
         </header>
-
-        <nav className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-4 py-4">
-              <Button variant={pathname === '/dashboard' ? 'default' : 'outline'} asChild>
-                <Link href="/dashboard">Overview</Link>
-              </Button>
-              <Button variant={pathname === '/dashboard/transactions' ? 'default' : 'outline'} asChild>
-                <Link href="/dashboard/transactions">Transactions</Link>
-              </Button>
-              <Button variant={pathname === '/dashboard/reports' ? 'default' : 'outline'} asChild>
-                <Link href="/dashboard/reports">Reports</Link>
-              </Button>
-              <Button variant={pathname === '/dashboard/insights' ? 'default' : 'outline'} asChild>
-                <Link href="/dashboard/insights">AI Insights</Link>
-              </Button>
-              <Button variant={pathname === '/dashboard/chat' ? 'default' : 'outline'} asChild>
-                <Link href="/dashboard/chat">Ask AI</Link>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Welcome, {user?.email}</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">
+              <Button onClick={handleSignOut} variant="outline" className="w-full">
+                Sign Out
               </Button>
             </div>
-          </div>
-        </nav>
+          </SheetContent>
+        </Sheet>
+
+        <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div className="flex flex-wrap gap-2 sm:gap-4 py-4">
+               <Button variant={pathname === '/dashboard' ? 'default' : 'outline'} asChild className="flex-1 sm:flex-none">
+                 <Link href="/dashboard">Overview</Link>
+               </Button>
+               <Button variant={pathname === '/dashboard/transactions' ? 'default' : 'outline'} asChild className="flex-1 sm:flex-none">
+                 <Link href="/dashboard/transactions">Transactions</Link>
+               </Button>
+               <Button variant={pathname === '/dashboard/reports' ? 'default' : 'outline'} asChild className="flex-1 sm:flex-none">
+                 <Link href="/dashboard/reports">Reports</Link>
+               </Button>
+               <Button variant={pathname === '/dashboard/insights' ? 'default' : 'outline'} asChild className="flex-1 sm:flex-none">
+                 <Link href="/dashboard/insights">AI Insights</Link>
+               </Button>
+               <Button variant={pathname === '/dashboard/chat' ? 'default' : 'outline'} asChild className="flex-1 sm:flex-none">
+                 <Link href="/dashboard/chat">Ask AI</Link>
+               </Button>
+             </div>
+           </div>
+         </nav>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Overview Cards */}
@@ -180,7 +272,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalBalance)}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
+              <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
 
@@ -191,7 +283,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
+              <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
 
@@ -202,32 +294,54 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
+              <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Monthly Chart */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Monthly Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-end justify-between space-x-2">
-              {[65, 45, 75, 55, 85, 70, 90].map((height, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-indigo-600 rounded-t"
-                    style={{ height: `${height}%` }}
-                  />
-                  <span className="text-xs text-gray-500 mt-2">
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+         <Card className="mb-8">
+           <CardHeader>
+             <CardTitle>Monthly Overview</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <ChartContainer config={chartConfig} className="h-64 w-full">
+               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                 <CartesianGrid strokeDasharray="3 3" />
+                 <XAxis
+                   dataKey="day"
+                   tick={{ fontSize: 12 }}
+                   interval={0}
+                   angle={-45}
+                   textAnchor="end"
+                   height={60}
+                 />
+                 <YAxis
+                   tick={{ fontSize: 12 }}
+                   tickFormatter={(value) => formatCurrency(value)}
+                 />
+                 <ChartTooltip
+                   content={
+                     <ChartTooltipContent
+                       formatter={(value) => [formatCurrency(value as number), "Net Amount"]}
+                       labelFormatter={(label) => `Day ${label}`}
+                     />
+                   }
+                 />
+                 <ReferenceLine y={0} stroke="#666" strokeDasharray="2 2" />
+                 <ReferenceLine x={currentDay} stroke="#000" strokeDasharray="2 2" />
+                 <Bar dataKey="net" radius={[2, 2, 0, 0]}>
+                   {chartData.map((entry, index) => (
+                     <Cell
+                       key={`cell-${index}`}
+                       fill={entry.net >= 0 ? '#10b981' : '#ef4444'}
+                     />
+                   ))}
+                 </Bar>
+               </BarChart>
+             </ChartContainer>
+           </CardContent>
+         </Card>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -267,15 +381,15 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-gray-500">{transaction.category}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{transaction.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                       {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount) * USD_TO_PHP)}
                     </p>
-                    <p className="text-xs text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}

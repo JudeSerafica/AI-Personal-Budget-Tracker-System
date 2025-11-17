@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { MessageSquare, Send, Bot, User, Loader2, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, Bot, User, Loader2, Trash2, Menu, X } from 'lucide-react';
+import { useTheme } from '@/lib/theme-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,15 +25,17 @@ interface Chat {
 }
 
 export default function ChatPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string>('');
-  const [inputMessage, setInputMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+   const router = useRouter();
+   const { theme } = useTheme();
+   const [user, setUser] = useState<any>(null);
+   const [chats, setChats] = useState<Chat[]>([]);
+   const [currentChatId, setCurrentChatId] = useState<string>('');
+   const [inputMessage, setInputMessage] = useState('');
+   const [loading, setLoading] = useState(true);
+   const [transactions, setTransactions] = useState<any[]>([]);
+   const [isTyping, setIsTyping] = useState(false);
+   const [sidebarOpen, setSidebarOpen] = useState(false);
+   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkUser();
@@ -219,17 +222,28 @@ export default function ChatPage() {
   const currentChat = getCurrentChat();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center space-x-4 mb-8">
-          <MessageSquare className="h-8 w-8 text-indigo-600" />
-          <h1 className="text-3xl font-bold text-gray-900">AI Financial Assistant</h1>
-        </div>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <MessageSquare className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Financial Assistant</h1>
+          </div>
+           <Button
+             variant="outline"
+             size="sm"
+             className="md:hidden"
+             onClick={() => setSidebarOpen(!sidebarOpen)}
+           >
+             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+           </Button>
+         </div>
 
         <div className="flex gap-6">
           {/* Sidebar */}
-          <div className="w-80 flex-shrink-0">
-            <Card className="h-[600px]">
+          <div className={`w-80 flex-shrink-0 fixed md:relative inset-y-0 left-0 z-50 md:z-auto transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+            <div className="md:hidden fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}></div>
+            <Card className="h-full md:h-[600px] w-80 relative z-10">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Chats</CardTitle>
@@ -240,7 +254,7 @@ export default function ChatPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <ScrollArea className="h-[500px]">
+                <ScrollArea className="h-[calc(100vh-200px)] md:h-[500px]">
                   <div className="space-y-1 p-4">
                     {chats.map((chat) => (
                       <div
@@ -252,7 +266,10 @@ export default function ChatPage() {
                         }`}
                       >
                         <button
-                          onClick={() => setCurrentChatId(chat.id)}
+                          onClick={() => {
+                            setCurrentChatId(chat.id);
+                            setSidebarOpen(false);
+                          }}
                           className="flex-1 text-left"
                         >
                           <div className="font-medium truncate">{chat.title}</div>
@@ -279,7 +296,7 @@ export default function ChatPage() {
           </div>
 
           {/* Main Chat Area */}
-          <div className="flex-1">
+          <div className="flex-1 md:ml-0">
             <Card className="min-h-[600px] flex flex-col">
               <CardHeader>
                 <CardTitle>{currentChat?.title || 'New Chat'}</CardTitle>
@@ -311,7 +328,7 @@ export default function ChatPage() {
                             )}
 
                             <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              className={`max-w-[280px] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                 message.sender === 'user'
                                   ? 'bg-indigo-600 text-white'
                                   : 'bg-indigo-100 text-indigo-900'
@@ -369,6 +386,24 @@ export default function ChatPage() {
                 </div>
               </CardContent>
             </Card>
+<div className="mt-4">
+  <p className="text-sm text-gray-500 mb-2">Quick suggestions:</p>
+  <div className="flex flex-wrap gap-2">
+    {["How much did I spend this month?", "What's my budget for groceries?", "Suggest ways to save money", "Analyze my spending patterns", "Show me my expenses by category", "How can I improve my savings?", "What's my average daily spending?", "Compare my spending this month vs last month", "Give me tips for budgeting", "What are my top spending categories?", "How much have I saved this year?", "Predict my expenses for next month"].map((suggestion, index) => (
+      <Button
+        key={index}
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          setInputMessage(suggestion);
+          handleSendMessage();
+        }}
+      >
+        {suggestion}
+      </Button>
+    ))}
+  </div>
+</div>
           </div>
         </div>
       </div>

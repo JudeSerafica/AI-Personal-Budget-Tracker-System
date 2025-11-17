@@ -1,12 +1,14 @@
 'use client';
 
-import { ArrowRight, BarChart3, Brain, MessageSquare, PieChart, Sparkles, Sun, Moon, TrendingUp, Wallet } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, BarChart3, Brain, MessageSquare, PieChart, Sparkles, Sun, Moon, TrendingUp, Wallet, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from '../lib/theme-context';
 import styles from './page.module.css';
 
 export default function Home() {
-  const { theme, toggleTheme } = useTheme();
+    const { theme, toggleTheme } = useTheme();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -17,8 +19,7 @@ export default function Home() {
             <span className={styles.logoText}>BudgetAI</span>
           </div>
           <div className={styles.navLinks}>
-            <button className={styles.navButton}>Features</button>
-            <button className={styles.navButton}>Pricing</button>
+            <a href="#features" className={styles.navButton}>Features</a>
             <Link href="/login">
               <button className={styles.navButton}>Sign In</button>
             </Link>
@@ -26,7 +27,26 @@ export default function Home() {
               <button className={styles.primaryButton}>Sign Up</button>
             </Link>
           </div>
+          <button
+            className={`${styles.navButton} md:hidden`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-4 py-4 space-y-2">
+              <a href="#features" className={`${styles.navButton} block w-full text-left`}>Features</a>
+              <Link href="/login">
+                <button className={`${styles.navButton} block w-full text-left`}>Sign In</button>
+              </Link>
+              <Link href="/signup">
+                <button className={`${styles.primaryButton} block w-full text-left`}>Sign Up</button>
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       <section className={styles.hero}>
@@ -41,19 +61,14 @@ export default function Home() {
           Track expenses, gain insights, and make smarter financial decisions with AI-powered budgeting that understands your spending patterns.
         </p>
         <div className={styles.heroButtons}>
-          <Link href="/login">
-            <button className={`${styles.largeButton} ${styles.primaryLarge}`}>
-              Get Started
-              <ArrowRight style={{ width: '20px', height: '20px' }} />
-            </button>
-          </Link>
-          <button className={`${styles.largeButton} ${styles.secondaryLarge}`}>
-            Watch Demo
-          </button>
+          <span className={styles.arrow}>↓</span>
+          <Link href="/login" className={styles.ctaButton}>
+          Get started
+        </Link>
         </div>
       </section>
 
-      <section className={styles.features}>
+      <section id="features" className={styles.features}>
         <div className={styles.featuresHeader}>
           <h2 className={styles.featuresTitle}>Powerful Features for Smart Budgeting</h2>
           <p className={styles.featuresSubtitle}>Everything you need to take control of your financial future</p>
