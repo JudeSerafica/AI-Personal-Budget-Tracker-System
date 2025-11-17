@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart3, TrendingUp, TrendingDown, Plus, Wallet, PieChart, MessageSquare, Brain, Loader2, Sun, Moon, Menu } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Plus, Wallet, PieChart, MessageSquare, Brain, Loader2, Sun, Moon, Menu, User } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,17 +169,6 @@ export default function DashboardPage() {
     router.push('/');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -198,6 +187,12 @@ export default function DashboardPage() {
                  {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                </button>
                <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {user?.email}</span>
+               <Button variant="outline" asChild>
+                 <Link href="/dashboard/profile">
+                   <User className="h-4 w-4 mr-2" />
+                   Profile
+                 </Link>
+               </Button>
                <AlertDialog>
                  <AlertDialogTrigger asChild>
                    <Button variant="outline">Sign Out</Button>
@@ -232,7 +227,13 @@ export default function DashboardPage() {
             <SheetHeader>
               <SheetTitle>Welcome, {user?.email}</SheetTitle>
             </SheetHeader>
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
+              <Button variant="outline" asChild className="w-full">
+                <Link href="/dashboard/profile">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Link>
+              </Button>
               <Button onClick={handleSignOut} variant="outline" className="w-full">
                 Sign Out
               </Button>

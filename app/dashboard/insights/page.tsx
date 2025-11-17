@@ -3,10 +3,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2 } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useTheme } from '@/lib/theme-context';
 
 interface Transaction {
@@ -335,17 +336,6 @@ export default function InsightsPage() {
     return recommendations;
   }, [transactions]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
   if (transactions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -371,12 +361,18 @@ export default function InsightsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-           <div className="flex items-center space-x-4">
-             <Brain className="h-8 w-8 text-indigo-600" />
-             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Spending Insights</h1>
+         <div className="mb-8">
+           <Button variant="outline" onClick={() => router.push('/dashboard')} className="mb-4">
+             <ArrowLeft className="h-4 w-4 mr-2" />
+             Back to Dashboard
+           </Button>
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div className="flex items-center space-x-4">
+               <Brain className="h-8 w-8 text-indigo-600" />
+               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Spending Insights</h1>
+             </div>
+             {aiLoading && <span className="text-sm text-gray-500 dark:text-gray-400">(Generating AI insights...)</span>}
            </div>
-           {aiLoading && <span className="text-sm text-gray-500 dark:text-gray-400">(Generating AI insights...)</span>}
          </div>
 
         {aiError && (

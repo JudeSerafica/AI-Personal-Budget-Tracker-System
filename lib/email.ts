@@ -47,7 +47,7 @@ export async function sendVerificationEmail(email: string, code: string) {
     // Send email
     console.log(`📤 Attempting to send email to: ${email}`);
     const info = await transporter.sendMail({
-      from: `"Your App" <${GMAIL_USER}>`,
+      from: `"BudgetAI" <${GMAIL_USER}>`,
       to: email,
       subject: 'Your Verification Code',
       html: htmlContent,

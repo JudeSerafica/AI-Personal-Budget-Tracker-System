@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { MessageSquare, Send, Bot, User, Loader2, Trash2, Menu, X } from 'lucide-react';
+import { MessageSquare, Send, Bot, User, Loader2, Trash2, Menu, X, ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -208,36 +208,31 @@ export default function ChatPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
   const currentChat = getCurrentChat();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <MessageSquare className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Financial Assistant</h1>
-          </div>
-           <Button
-             variant="outline"
-             size="sm"
-             className="md:hidden"
-             onClick={() => setSidebarOpen(!sidebarOpen)}
-           >
-             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-           </Button>
-         </div>
+        <div className="mb-8">
+          <Button variant="outline" onClick={() => router.push('/dashboard')} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <MessageSquare className="h-8 w-8 text-indigo-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">AI Financial Assistant</h1>
+            </div>
+             <Button
+               variant="outline"
+               size="sm"
+               className="md:hidden"
+               onClick={() => setSidebarOpen(!sidebarOpen)}
+             >
+               {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+             </Button>
+           </div>
+        </div>
 
         <div className="flex gap-6">
           {/* Sidebar */}

@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useTheme } from '@/lib/theme-context';
 
 interface Transaction {
@@ -129,21 +130,16 @@ export default function ReportsPage() {
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
   const totalExpenses = Math.abs(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">Monthly Reports</h1>
+         <div className="mb-8">
+           <Button variant="outline" onClick={() => router.push('/dashboard')} className="mb-4">
+             <ArrowLeft className="h-4 w-4 mr-2" />
+             Back to Dashboard
+           </Button>
+           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Monthly Reports</h1>
+         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -215,7 +211,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
+                <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 40, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
