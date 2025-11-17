@@ -1,6 +1,11 @@
 .container {
   min-height: 100vh;
   background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  transition: background 0.3s ease;
+}
+
+.dark .container {
+  background: linear-gradient(to bottom, #0f172a, #1e293b);
 }
 
 .nav {
@@ -10,6 +15,12 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.dark .nav {
+  border-bottom: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .navContent {
@@ -28,13 +39,14 @@
 }
 
 .logoIcon {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
 }
 
 .logoText {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .navLinks {
@@ -55,6 +67,41 @@
 
 .navButton:hover {
   color: #0f172a;
+}
+
+.dark .navButton {
+  color: #cbd5e1;
+}
+
+.dark .navButton:hover {
+  color: #f8fafc;
+}
+
+.themeToggle {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  color: #334155;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.themeToggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.dark .themeToggle {
+  color: #cbd5e1;
+}
+
+.dark .themeToggle:hover {
+  background: #334155;
+  color: #f8fafc;
 }
 
 .primaryButton {
@@ -117,6 +164,11 @@
   max-width: 42rem;
   margin-left: auto;
   margin-right: auto;
+  transition: color 0.3s ease;
+}
+
+.dark .heroDescription {
+  color: #cbd5e1;
 }
 
 .heroButtons {
@@ -152,10 +204,21 @@
   background: white;
   color: #0f172a;
   border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .secondaryLarge:hover {
   background: #f8fafc;
+}
+
+.dark .secondaryLarge {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+}
+
+.dark .secondaryLarge:hover {
+  background: #334155;
 }
 
 .dashboardPreview {
@@ -169,6 +232,11 @@
   background: linear-gradient(to top, white, transparent, transparent);
   z-index: 10;
   pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+.dark .fadeOverlay {
+  background: linear-gradient(to top, #1e293b, transparent, transparent);
 }
 
 .card {
@@ -177,6 +245,13 @@
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.dark .card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .statsGrid {
@@ -194,6 +269,11 @@
   font-size: 0.875rem;
   color: #64748b;
   margin-bottom: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.dark .statLabel {
+  color: #94a3b8;
 }
 
 .statValue {
@@ -214,6 +294,11 @@
   font-size: 0.875rem;
   color: #94a3b8;
   margin-top: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.dark .statSubtext {
+  color: #64748b;
 }
 
 .chart {
@@ -224,6 +309,11 @@
   align-items: flex-end;
   justify-content: space-around;
   padding: 1.5rem;
+  transition: background 0.3s ease;
+}
+
+.dark .chart {
+  background: linear-gradient(to top, #334155, #475569);
 }
 
 .chartBar {
@@ -247,6 +337,11 @@
 .chartLabel {
   font-size: 0.75rem;
   color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.dark .chartLabel {
+  color: #94a3b8;
 }
 
 .features {
@@ -269,6 +364,11 @@
 .featuresSubtitle {
   font-size: 1.125rem;
   color: #475569;
+  transition: color 0.3s ease;
+}
+
+.dark .featuresSubtitle {
+  color: #cbd5e1;
 }
 
 .featuresGrid {
@@ -282,11 +382,20 @@
   padding: 1.5rem;
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
-  transition: box-shadow 0.2s;
+  transition: all 0.3s ease;
 }
 
 .featureCard:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .featureCard {
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.dark .featureCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 
 .featureIcon {
@@ -298,6 +407,11 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
+  transition: background 0.3s ease;
+}
+
+.dark .featureIcon {
+  background: #334155;
 }
 
 .featureTitle {
@@ -309,6 +423,11 @@
 .featureDescription {
   color: #475569;
   line-height: 1.6;
+  transition: color 0.3s ease;
+}
+
+.dark .featureDescription {
+  color: #cbd5e1;
 }
 
 .aiSection {
@@ -439,12 +558,23 @@
   max-width: 42rem;
   margin-left: auto;
   margin-right: auto;
+  transition: color 0.3s ease;
+}
+
+.dark .ctaDescription {
+  color: #cbd5e1;
 }
 
 .footer {
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
   padding: 3rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.dark .footer {
+  border-top: 1px solid #334155;
+  background: #0f172a;
 }
 
 .footerContent {
@@ -475,10 +605,19 @@
   color: #475569;
   margin-bottom: 0.5rem;
   cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 .footerColumn li:hover {
   color: #0f172a;
+}
+
+.dark .footerColumn li {
+  color: #cbd5e1;
+}
+
+.dark .footerColumn li:hover {
+  color: #f8fafc;
 }
 
 .footerBottom {
@@ -498,6 +637,11 @@
 .footerText {
   font-size: 0.875rem;
   color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.dark .footerText {
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
