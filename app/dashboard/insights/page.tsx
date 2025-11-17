@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2 } from 'lucide-react';
@@ -16,6 +16,28 @@ interface Transaction {
   type: string;
   date: string;
 }
+
+// Default budgets for categories (monthly)
+const DEFAULT_BUDGETS: Record<string, number> = {
+  'Food & Dining': 400,
+  'Transportation': 200,
+  'Entertainment': 150,
+  'Shopping': 200,
+  'Healthcare': 100,
+  'Travel': 300,
+  'Personal Care': 50,
+  'Other': 100,
+};
+
+// Thresholds for insights
+const THRESHOLDS = {
+  FOOD_SPENDING_RATIO: 0.3,
+  ENTERTAINMENT_SPENDING_RATIO: 0.15,
+  HIGH_CATEGORY_RATIO: 0.2,
+  SAVINGS_RATE_HIGH: 20,
+  SAVINGS_RATE_LOW: 10,
+  RECURRING_EXPENSES_RATIO: 0.6,
+};
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -71,14 +93,19 @@ export default function InsightsPage() {
 
   const [aiInsights, setAiInsights] = useState<any>({ insights: [], recommendations: [] });
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const fetchAiInsights = async () => {
     if (transactions.length === 0) return;
 
     setAiLoading(true);
+    setAiError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
+      if (!session?.access_token) {
+        setAiError('Authentication required. Please log in again.');
+        return;
+      }
 
       const response = await fetch('/api/insights', {
         method: 'POST',
@@ -92,9 +119,12 @@ export default function InsightsPage() {
       if (response.ok) {
         const data = await response.json();
         setAiInsights(data);
+      } else {
+        setAiError('Failed to generate AI insights. Please try again later.');
       }
     } catch (error) {
       console.error('Error fetching AI insights:', error);
+      setAiError('Unable to connect to AI service. Check your internet connection.');
     } finally {
       setAiLoading(false);
     }
@@ -106,10 +136,14 @@ export default function InsightsPage() {
     }
   }, [transactions]);
 
-  const generateInsights = () => {
+  const insights = useMemo(() => {
+    if (transactions.length === 0) return [];
+
     const expenses = transactions.filter(t => t.type === 'expense');
     const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = Math.abs(expenses.reduce((sum, t) => sum + t.amount, 0));
+
+    if (totalExpenses === 0) return [];
 
     const foodExpenses = expenses
       .filter(t => t.category === 'Food & Dining')
@@ -122,11 +156,11 @@ export default function InsightsPage() {
     const insights = [];
 
     // Food spending insight
-    if (foodExpenses > totalExpenses * 0.3) {
+    if (foodExpenses > totalExpenses * THRESHOLDS.FOOD_SPENDING_RATIO) {
       insights.push({
         type: 'warning',
         title: 'High Food Spending',
-        message: `Your food expenses (${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of total spending) are quite high. Consider meal prepping to save money.`,
+        message: `Your food expenses (₱${foodExpenses.toFixed(2)}, ${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of total spending) are quite high. Consider meal prepping to save money.`,
         icon: AlertTriangle,
         color: 'text-yellow-600'
       });
@@ -142,11 +176,11 @@ export default function InsightsPage() {
       }, {} as Record<string, number>);
 
     Object.entries(highSpendingCategories).forEach(([category, amount]) => {
-      if (amount > totalExpenses * 0.2) {
+      if (amount > totalExpenses * THRESHOLDS.HIGH_CATEGORY_RATIO) {
         insights.push({
           type: 'info',
           title: `High ${category} Spending`,
-          message: `${category} represents ${((amount / totalExpenses) * 100).toFixed(1)}% of your expenses. Consider reviewing your ${category.toLowerCase()} habits.`,
+          message: `${category} represents ₱${amount.toFixed(2)} (${((amount / totalExpenses) * 100).toFixed(1)}% of your expenses). Consider reviewing your ${category.toLowerCase()} habits.`,
           icon: Lightbulb,
           color: 'text-blue-600'
         });
@@ -154,7 +188,7 @@ export default function InsightsPage() {
     });
 
     // Entertainment insight
-    if (entertainmentExpenses > totalExpenses * 0.15) {
+    if (entertainmentExpenses > totalExpenses * THRESHOLDS.ENTERTAINMENT_SPENDING_RATIO) {
       insights.push({
         type: 'info',
         title: 'Entertainment Budget',
@@ -165,23 +199,25 @@ export default function InsightsPage() {
     }
 
     // Savings rate insight
-    const savingsRate = ((income - totalExpenses) / income) * 100;
-    if (savingsRate > 20) {
-      insights.push({
-        type: 'success',
-        title: 'Great Savings Rate!',
-        message: `You're saving ${savingsRate.toFixed(1)}% of your income. Keep up the excellent work!`,
-        icon: TrendingUp,
-        color: 'text-green-600'
-      });
-    } else if (savingsRate < 10) {
-      insights.push({
-        type: 'warning',
-        title: 'Low Savings Rate',
-        message: `You're only saving ${savingsRate.toFixed(1)}% of your income. Consider cutting back on non-essential expenses.`,
-        icon: AlertTriangle,
-        color: 'text-red-600'
-      });
+    if (income > 0) {
+      const savingsRate = ((income - totalExpenses) / income) * 100;
+      if (savingsRate > THRESHOLDS.SAVINGS_RATE_HIGH) {
+        insights.push({
+          type: 'success',
+          title: 'Great Savings Rate!',
+          message: `You're saving ${savingsRate.toFixed(1)}% of your ₱${income.toFixed(2)} income. Keep up the excellent work!`,
+          icon: TrendingUp,
+          color: 'text-green-600'
+        });
+      } else if (savingsRate < THRESHOLDS.SAVINGS_RATE_LOW) {
+        insights.push({
+          type: 'warning',
+          title: 'Low Savings Rate',
+          message: `You're only saving ${savingsRate.toFixed(1)}% of your ₱${income.toFixed(2)} income. Consider cutting back on non-essential expenses.`,
+          icon: AlertTriangle,
+          color: 'text-red-600'
+        });
+      }
     }
 
     // Recurring expenses insight
@@ -190,21 +226,112 @@ export default function InsightsPage() {
       .filter(t => recurringCategories.includes(t.category))
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    if (recurringTotal > totalExpenses * 0.6) {
+    if (recurringTotal > totalExpenses * THRESHOLDS.RECURRING_EXPENSES_RATIO) {
       insights.push({
         type: 'info',
         title: 'Fixed Expenses Analysis',
-        message: `${((recurringTotal / totalExpenses) * 100).toFixed(1)}% of your expenses are fixed costs. Focus on optimizing variable expenses.`,
+        message: `₱${recurringTotal.toFixed(2)} (${((recurringTotal / totalExpenses) * 100).toFixed(1)}% of your expenses) are fixed costs. Focus on optimizing variable expenses.`,
         icon: Brain,
         color: 'text-purple-600'
       });
     }
 
     return insights;
-  };
+  }, [transactions]);
 
-  const insights = generateInsights();
   const allInsights = [...insights, ...aiInsights.insights];
+
+  const budgetAlerts = useMemo(() => {
+    if (transactions.length === 0) return [];
+
+    const expenses = transactions.filter(t => t.type === 'expense');
+    const alerts: any[] = [];
+
+    // Calculate spending by category
+    const categorySpending = expenses.reduce((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Check against budgets
+    Object.entries(DEFAULT_BUDGETS).forEach(([category, budget]) => {
+      const spent = categorySpending[category] || 0;
+      if (spent > budget) {
+        const overBy = ((spent - budget) / budget * 100).toFixed(1);
+        alerts.push({
+          type: 'warning',
+          title: `Budget Exceeded: ${category}`,
+          message: `You've exceeded your ${category} budget by ${overBy}%. Spent $${spent.toFixed(2)} of $${budget}.`,
+          icon: AlertTriangle,
+        });
+      } else if (spent > budget * 0.8) {
+        const percent = ((spent / budget) * 100).toFixed(1);
+        alerts.push({
+          type: 'info',
+          title: `Approaching ${category} Budget`,
+          message: `You're at ${percent}% of your ${category} budget. Spent $${spent.toFixed(2)} of $${budget}.`,
+          icon: TrendingUp,
+        });
+      }
+    });
+
+    return alerts;
+  }, [transactions]);
+
+  const fallbackRecommendations = useMemo(() => {
+    if (transactions.length === 0) return [];
+
+    const expenses = transactions.filter(t => t.type === 'expense');
+    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = Math.abs(expenses.reduce((sum, t) => sum + t.amount, 0));
+
+    const recommendations: any[] = [];
+
+    if (totalExpenses === 0) return recommendations;
+
+    const foodExpenses = expenses
+      .filter(t => t.category === 'Food & Dining')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    if (foodExpenses > totalExpenses * THRESHOLDS.FOOD_SPENDING_RATIO) {
+      recommendations.push({
+        title: 'Meal Planning',
+        description: `Based on your food spending (${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of expenses), implementing a weekly meal plan could save you approximately ₱${(foodExpenses * 0.2).toFixed(0)} per month.`,
+        potentialSavings: `₱${(foodExpenses * 0.2).toFixed(0)}/month`
+      });
+    }
+
+    const entertainmentExpenses = expenses
+      .filter(t => t.category === 'Entertainment')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    if (entertainmentExpenses > totalExpenses * THRESHOLDS.ENTERTAINMENT_SPENDING_RATIO) {
+      recommendations.push({
+        title: 'Entertainment Alternatives',
+        description: 'Consider free or low-cost entertainment options like community events, libraries, or home activities.',
+        potentialSavings: `₱${entertainmentExpenses.toFixed(0)}/month potential`
+      });
+    }
+
+    if (income > 0 && ((income - totalExpenses) / income) * 100 < THRESHOLDS.SAVINGS_RATE_LOW) {
+      recommendations.push({
+        title: 'Savings Goal',
+        description: 'Set up automatic transfers to a savings account to build an emergency fund.',
+        potentialSavings: 'Ongoing'
+      });
+    }
+
+    // Default if no specific recommendations
+    if (recommendations.length === 0) {
+      recommendations.push({
+        title: 'Review Budget',
+        description: 'Consider reviewing your spending patterns for optimization opportunities.',
+        potentialSavings: 'TBD'
+      });
+    }
+
+    return recommendations;
+  }, [transactions]);
 
   if (loading) {
     return (
@@ -212,6 +339,28 @@ export default function InsightsPage() {
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin" />
           <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center space-x-4 mb-8">
+            <Brain className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-gray-900">AI Spending Insights</h1>
+          </div>
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Transactions Found</h3>
+                <p className="text-gray-500">Add some transactions to get personalized AI insights and recommendations.</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -225,6 +374,13 @@ export default function InsightsPage() {
           <h1 className="text-3xl font-bold text-gray-900">AI Spending Insights</h1>
           {aiLoading && <span className="text-sm text-gray-500">(Generating AI insights...)</span>}
         </div>
+
+        {aiError && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{aiError}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {allInsights.map((insight, index) => (
@@ -252,44 +408,34 @@ export default function InsightsPage() {
           ))}
         </div>
 
-        {/* Spending Alerts */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Budget Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  You've exceeded your entertainment budget by 25% this month. Consider reducing discretionary spending.
-                </AlertDescription>
-              </Alert>
+        {/* Budget Alerts */}
+        {budgetAlerts.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Budget Alerts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {budgetAlerts.map((alert, index) => (
+                  <Alert key={index}>
+                    <alert.icon className="h-4 w-4" />
+                    <AlertDescription>
+                      {alert.message}
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-              <Alert>
-                <TrendingUp className="h-4 w-4" />
-                <AlertDescription>
-                  Great job! Your grocery spending is 15% below your monthly average.
-                </AlertDescription>
-              </Alert>
-
-              <Alert>
-                <Lightbulb className="h-4 w-4" />
-                <AlertDescription>
-                  Based on your spending patterns, you could save $120/month by optimizing your transportation costs.
-                </AlertDescription>
-              </Alert>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AI Recommendations */}
+        {/* Personalized Recommendations */}
         <Card>
           <CardHeader>
             <CardTitle>Personalized Recommendations</CardTitle>
           </CardHeader>
           <CardContent>
-            {aiInsights.recommendations && aiInsights.recommendations.length > 0 ? (
+            {(aiInsights.recommendations && aiInsights.recommendations.length > 0) ? (
               <div className="space-y-4">
                 {aiInsights.recommendations.map((rec: any, index: number) => (
                   <div key={index} className={`p-4 rounded-lg ${
@@ -318,26 +464,30 @@ export default function InsightsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">Meal Planning</h4>
-                  <p className="text-sm text-blue-700">
-                    Based on your food spending patterns, implementing a weekly meal plan could save you approximately $80 per month.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-semibold text-green-900 mb-2">Subscription Review</h4>
-                  <p className="text-sm text-green-700">
-                    You have 3 active subscriptions totaling $45/month. Consider reviewing if all are essential to your lifestyle.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <h4 className="font-semibold text-purple-900 mb-2">Savings Goal</h4>
-                  <p className="text-sm text-purple-700">
-                    At your current savings rate, you'll reach your $10,000 emergency fund goal in 8 months. Consider increasing contributions.
-                  </p>
-                </div>
+                {fallbackRecommendations.map((rec, index) => (
+                  <div key={index} className={`p-4 rounded-lg ${
+                    index % 3 === 0 ? 'bg-blue-50' :
+                    index % 3 === 1 ? 'bg-green-50' : 'bg-purple-50'
+                  }`}>
+                    <h4 className="font-semibold mb-2" style={{
+                      color: index % 3 === 0 ? '#1e40af' :
+                             index % 3 === 1 ? '#166534' : '#7c3aed'
+                    }}>
+                      {rec.title}
+                    </h4>
+                    <p className="text-sm" style={{
+                      color: index % 3 === 0 ? '#1d4ed8' :
+                             index % 3 === 1 ? '#15803d' : '#9333ea'
+                    }}>
+                      {rec.description}
+                      {rec.potentialSavings && (
+                        <span className="block mt-1 font-medium">
+                          Potential savings: {rec.potentialSavings}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

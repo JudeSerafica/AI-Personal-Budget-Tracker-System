@@ -26,6 +26,10 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
   useEffect(() => {
     checkUser();
     fetchTransactions();
@@ -74,32 +78,23 @@ export default function DashboardPage() {
     }
   };
 
-  // Currency conversion functions
+  // Currency conversion
   const USD_TO_PHP = 56.5;
-  const PHP_TO_USD = 1 / USD_TO_PHP;
-
-  const convertToPHP = (usdAmount: number): number => usdAmount * USD_TO_PHP;
-  const convertToUSD = (phpAmount: number): number => phpAmount * PHP_TO_USD;
 
   // Format currency with comma separators
-  const formatCurrency = (amount: number, currency: 'PHP' | 'USD'): string => {
-    const symbol = currency === 'PHP' ? '₱' : '$';
+  const formatCurrency = (amount: number): string => {
+    const symbol = '₱';
     const formatted = amount.toLocaleString('en-US', {
-      minimumFractionDigits: currency === 'PHP' ? 0 : 2,
-      maximumFractionDigits: currency === 'PHP' ? 0 : 2
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     });
     return `${symbol}${formatted}`;
   };
 
-  // Calculate totals in PHP (primary currency)
-  const totalIncomePHP = convertToPHP(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0));
-  const totalExpensesPHP = Math.abs(convertToPHP(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)));
-  const balancePHP = totalIncomePHP - totalExpensesPHP;
-
-  // Keep USD versions for reference
-  const totalIncomeUSD = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpensesUSD = Math.abs(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0));
-  const balanceUSD = totalIncomeUSD - totalExpensesUSD;
+  // Calculate totals for all transactions (amounts stored in USD, convert to PHP)
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
+  const totalExpenses = Math.abs(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
+  const totalBalance = totalIncome - totalExpenses;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -184,10 +179,8 @@ export default function DashboardPage() {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(balancePHP, 'PHP')}</div>
-              <p className="text-xs text-muted-foreground">
-                {formatCurrency(balanceUSD, 'USD')} USD
-              </p>
+              <div className="text-2xl font-bold">{formatCurrency(totalBalance)}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
 
@@ -197,8 +190,8 @@ export default function DashboardPage() {
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncomePHP, 'PHP')}</div>
-              <p className="text-xs text-muted-foreground">{formatCurrency(totalIncomeUSD, 'USD')} USD</p>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
 
@@ -208,8 +201,8 @@ export default function DashboardPage() {
               <TrendingDown className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpensesPHP, 'PHP')}</div>
-              <p className="text-xs text-muted-foreground">{formatCurrency(totalExpensesUSD, 'USD')} USD</p>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
         </div>
@@ -280,9 +273,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'income' ? '+' : ''}{formatCurrency(Math.abs(transaction.amount) * 56.5, 'PHP')}
+                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount) * USD_TO_PHP)}
                     </p>
-                    <p className="text-sm text-gray-500">{formatCurrency(Math.abs(transaction.amount), 'USD')} USD</p>
                     <p className="text-xs text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
                 </div>

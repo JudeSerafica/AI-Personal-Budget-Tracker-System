@@ -19,19 +19,15 @@ interface Transaction {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-// Currency conversion functions
-const USD_TO_PHP = 56.5;
-const PHP_TO_USD = 1 / USD_TO_PHP;
-
-const convertToPHP = (usdAmount: number): number => usdAmount * USD_TO_PHP;
-const convertToUSD = (phpAmount: number): number => phpAmount * PHP_TO_USD;
+// Currency conversion
+const USD_TO_PHP = 58.96;
 
 // Format currency with comma separators
-const formatCurrency = (amount: number, currency: 'PHP' | 'USD'): string => {
-  const symbol = currency === 'PHP' ? '₱' : '$';
+const formatCurrency = (amount: number): string => {
+  const symbol = '₱';
   const formatted = amount.toLocaleString('en-US', {
-    minimumFractionDigits: currency === 'PHP' ? 0 : 2,
-    maximumFractionDigits: currency === 'PHP' ? 0 : 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   });
   return `${symbol}${formatted}`;
 };
@@ -41,6 +37,10 @@ export default function ReportsPage() {
   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
   useEffect(() => {
     checkUser();
@@ -92,7 +92,7 @@ export default function ReportsPage() {
     .filter(t => t.type === 'expense')
     .reduce((acc, t) => {
       const category = t.category;
-      acc[category] = (acc[category] || 0) + convertToPHP(Math.abs(t.amount));
+      acc[category] = (acc[category] || 0) + Math.abs(t.amount) * USD_TO_PHP;
       return acc;
     }, {} as Record<string, number>);
 
@@ -101,17 +101,26 @@ export default function ReportsPage() {
     value
   }));
 
-  const monthlyData = [
-    { month: 'Jan', income: 2500, expenses: 625 },
-    { month: 'Feb', income: 2500, expenses: 580 },
-    { month: 'Mar', income: 2600, expenses: 720 },
-    { month: 'Apr', income: 2500, expenses: 650 },
-    { month: 'May', income: 2700, expenses: 780 },
-    { month: 'Jun', income: 2500, expenses: 690 },
-  ];
+  const monthlyMap = transactions.reduce((acc, t) => {
+    const d = new Date(t.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!acc[key]) acc[key] = { income: 0, expenses: 0 };
+    if (t.type === 'income') acc[key].income += t.amount * USD_TO_PHP;
+    else acc[key].expenses += Math.abs(t.amount) * USD_TO_PHP;
+    return acc;
+  }, {} as Record<string, {income: number, expenses: number}>);
 
-  const totalIncome = convertToPHP(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0));
-  const totalExpenses = Math.abs(convertToPHP(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)));
+  const monthlyData = Object.entries(monthlyMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([key, values]) => {
+      const [year, month] = key.split('-');
+      const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('en-US', { month: 'short' });
+      return { month: monthName, income: values.income, expenses: values.expenses };
+    });
+
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) * USD_TO_PHP;
+  const totalExpenses = Math.abs(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)) * USD_TO_PHP;
 
   if (loading) {
     return (
@@ -136,8 +145,8 @@ export default function ReportsPage() {
               <CardTitle>Total Income</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome, 'PHP')}</div>
-              <p className="text-sm text-gray-500">This month</p>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <p className="text-sm text-gray-500">All time</p>
             </CardContent>
           </Card>
 
@@ -146,8 +155,8 @@ export default function ReportsPage() {
               <CardTitle>Total Expenses</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses, 'PHP')}</div>
-              <p className="text-sm text-gray-500">This month</p>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+              <p className="text-sm text-gray-500">All time</p>
             </CardContent>
           </Card>
 
@@ -156,8 +165,8 @@ export default function ReportsPage() {
               <CardTitle>Net Savings</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalIncome - totalExpenses, 'PHP')}</div>
-              <p className="text-sm text-gray-500">This month</p>
+              <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalIncome - totalExpenses)}</div>
+              <p className="text-sm text-gray-500">All time</p>
             </CardContent>
           </Card>
         </div>
@@ -186,7 +195,7 @@ export default function ReportsPage() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`${formatCurrency(value, 'PHP')}`, 'Amount']} />
+                  <Tooltip formatter={(value: number) => [`${formatCurrency(value)}`, 'Amount']} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -203,7 +212,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => [`${formatCurrency(value, 'PHP')}`, '']} />
+                  <Tooltip formatter={(value: number) => [`${formatCurrency(value)}`, '']} />
                   <Legend />
                   <Bar dataKey="income" fill="#10B981" name="Income" />
                   <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
@@ -230,7 +239,7 @@ export default function ReportsPage() {
                         {((amount / totalExpenses) * 100).toFixed(1)}% of expenses
                       </span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(amount, 'PHP')}</span>
+                    <span className="font-semibold">{formatCurrency(amount)}</span>
                   </div>
                 ))}
             </div>
