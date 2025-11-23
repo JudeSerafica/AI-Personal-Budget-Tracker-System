@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart3, TrendingUp, TrendingDown, Plus, Wallet, PieChart, MessageSquare, Brain, Loader2, Sun, Moon, Menu, User } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -125,6 +125,16 @@ export default function DashboardPage() {
     const formatted = amount.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
+    });
+    return `${symbol}${formatted}`;
+  };
+
+  // Format USD currency
+  const formatCurrencyUSD = (amount: number): string => {
+    const symbol = '$';
+    const formatted = amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
     return `${symbol}${formatted}`;
   };
@@ -295,6 +305,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalBalance)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD(totalBalance / USD_TO_PHP)}</div>
               <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
@@ -306,6 +317,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD(totalIncome / USD_TO_PHP)}</div>
               <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
@@ -317,6 +329,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD(totalExpenses / USD_TO_PHP)}</div>
               <p className="text-xs text-muted-foreground">This Month</p>
             </CardContent>
           </Card>
@@ -363,6 +376,14 @@ export default function DashboardPage() {
                  </Bar>
                </BarChart>
              </ChartContainer>
+             <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+               {(() => {
+                 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                 const monthName = monthNames[currentMonth];
+                 const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                 return `${monthName} ${currentYear} - ${daysInMonth} days`;
+               })()}
+             </div>
            </CardContent>
          </Card>
 

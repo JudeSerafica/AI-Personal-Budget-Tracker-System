@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, BarChart3, Brain, MessageSquare, PieChart, Sparkles, Sun, Moon, TrendingUp, Wallet, Menu, X } from 'lucide-react';
+import { ArrowRight, BarChart3, Brain, MessageSquare, PieChart, Sparkles, Wallet, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useTheme } from '../lib/theme-context';
 import styles from './page.module.css';
 
 export default function Home() {
-    const { theme, toggleTheme } = useTheme();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -35,7 +33,7 @@ export default function Home() {
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <div className="md:hidden bg-white border-t border-gray-200">
             <div className="px-4 py-4 space-y-2">
               <a href="#features" className={`${styles.navButton} block w-full text-left`}>Features</a>
               <Link href="/login">

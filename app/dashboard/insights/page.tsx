@@ -163,7 +163,7 @@ export default function InsightsPage() {
       insights.push({
         type: 'warning',
         title: 'High Food Spending',
-        message: `Your food expenses (₱${foodExpenses.toFixed(2)}, ${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of total spending) are quite high. Consider meal prepping to save money.`,
+        message: `Your food expenses ($${foodExpenses.toFixed(2)}, ${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of total spending) are quite high. Consider meal prepping to save money.`,
         icon: AlertTriangle,
         color: 'text-yellow-600'
       });
@@ -183,7 +183,7 @@ export default function InsightsPage() {
         insights.push({
           type: 'info',
           title: `High ${category} Spending`,
-          message: `${category} represents ₱${amount.toFixed(2)} (${((amount / totalExpenses) * 100).toFixed(1)}% of your expenses). Consider reviewing your ${category.toLowerCase()} habits.`,
+          message: `${category} represents $${amount.toFixed(2)} (${((amount / totalExpenses) * 100).toFixed(1)}% of your expenses). Consider reviewing your ${category.toLowerCase()} habits.`,
           icon: Lightbulb,
           color: 'text-blue-600'
         });
@@ -208,7 +208,7 @@ export default function InsightsPage() {
         insights.push({
           type: 'success',
           title: 'Great Savings Rate!',
-          message: `You're saving ${savingsRate.toFixed(1)}% of your ₱${income.toFixed(2)} income. Keep up the excellent work!`,
+          message: `You're saving ${savingsRate.toFixed(1)}% of your $${income.toFixed(2)} income. Keep up the excellent work!`,
           icon: TrendingUp,
           color: 'text-green-600'
         });
@@ -216,7 +216,7 @@ export default function InsightsPage() {
         insights.push({
           type: 'warning',
           title: 'Low Savings Rate',
-          message: `You're only saving ${savingsRate.toFixed(1)}% of your ₱${income.toFixed(2)} income. Consider cutting back on non-essential expenses.`,
+          message: `You're only saving ${savingsRate.toFixed(1)}% of your $${income.toFixed(2)} income. Consider cutting back on non-essential expenses.`,
           icon: AlertTriangle,
           color: 'text-red-600'
         });
@@ -233,7 +233,7 @@ export default function InsightsPage() {
       insights.push({
         type: 'info',
         title: 'Fixed Expenses Analysis',
-        message: `₱${recurringTotal.toFixed(2)} (${((recurringTotal / totalExpenses) * 100).toFixed(1)}% of your expenses) are fixed costs. Focus on optimizing variable expenses.`,
+        message: `$${recurringTotal.toFixed(2)} (${((recurringTotal / totalExpenses) * 100).toFixed(1)}% of your expenses) are fixed costs. Focus on optimizing variable expenses.`,
         icon: Brain,
         color: 'text-purple-600'
       });
@@ -299,7 +299,7 @@ export default function InsightsPage() {
     if (foodExpenses > totalExpenses * THRESHOLDS.FOOD_SPENDING_RATIO) {
       recommendations.push({
         title: 'Meal Planning',
-        description: `Based on your food spending (${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of expenses), implementing a weekly meal plan could save you approximately ₱${(foodExpenses * 0.2).toFixed(0)} per month.`,
+        description: `Based on your food spending (${((foodExpenses / totalExpenses) * 100).toFixed(1)}% of expenses), implementing a weekly meal plan could save you approximately $${(foodExpenses * 0.2).toFixed(0)} per month.`,
         potentialSavings: `₱${(foodExpenses * 0.2).toFixed(0)}/month`
       });
     }
@@ -312,7 +312,7 @@ export default function InsightsPage() {
       recommendations.push({
         title: 'Entertainment Alternatives',
         description: 'Consider free or low-cost entertainment options like community events, libraries, or home activities.',
-        potentialSavings: `₱${entertainmentExpenses.toFixed(0)}/month potential`
+        potentialSavings: `${entertainmentExpenses.toFixed(0)}/month potential`
       });
     }
 

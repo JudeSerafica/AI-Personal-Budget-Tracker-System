@@ -40,7 +40,6 @@ export default function ChatPage() {
   useEffect(() => {
     checkUser();
     fetchTransactions();
-    loadChats();
   }, []);
 
   const checkUser = async () => {
@@ -50,6 +49,7 @@ export default function ChatPage() {
       return;
     }
     setUser(user);
+    loadChats(user.id);
   };
 
   const fetchTransactions = async () => {
@@ -79,8 +79,8 @@ export default function ChatPage() {
     }
   };
 
-  const loadChats = () => {
-    const savedChats = localStorage.getItem('budgetChats');
+  const loadChats = (userId: string) => {
+    const savedChats = localStorage.getItem(`budgetChats_${userId}`);
     if (savedChats) {
       const parsedChats: Chat[] = JSON.parse(savedChats).map((chat: any) => ({
         ...chat,
@@ -102,8 +102,8 @@ export default function ChatPage() {
     setLoading(false);
   };
 
-  const saveChats = (chatsToSave: Chat[]) => {
-    localStorage.setItem('budgetChats', JSON.stringify(chatsToSave));
+  const saveChats = (chatsToSave: Chat[], userId: string) => {
+    localStorage.setItem(`budgetChats_${userId}`, JSON.stringify(chatsToSave));
   };
 
   const createNewChat = () => {
@@ -113,7 +113,9 @@ export default function ChatPage() {
       messages: [],
       createdAt: new Date()
     };
-    setChats(prev => [newChat, ...prev]);
+    const updatedChats = [newChat, ...chats];
+    setChats(updatedChats);
+    saveChats(updatedChats, user.id);
     setCurrentChatId(newChat.id);
   };
 
@@ -124,7 +126,7 @@ export default function ChatPage() {
   const deleteChat = (chatId: string) => {
     const updatedChats = chats.filter(chat => chat.id !== chatId);
     setChats(updatedChats);
-    saveChats(updatedChats);
+    saveChats(updatedChats, user.id);
 
     // If deleting current chat, switch to another or create new
     if (chatId === currentChatId) {
@@ -191,7 +193,7 @@ export default function ChatPage() {
             ? { ...chat, messages: [...chat.messages, aiResponse] }
             : chat
         );
-        saveChats(updatedChats);
+        saveChats(updatedChats, user.id);
         return updatedChats;
       });
     } catch (error) {

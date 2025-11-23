@@ -8,12 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, Mail, Loader2, ArrowLeft, Sun, Moon } from 'lucide-react';
-import { useTheme } from '@/lib/theme-context';
+import { CheckCircle, Mail, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function SignupPage() {
-  const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -160,23 +158,15 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 dark:bg-gray-900">
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-        >
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               sign in to your account
             </Link>
           </p>
@@ -256,7 +246,7 @@ export default function SignupPage() {
               <form onSubmit={handleVerifyCode} className="space-y-4">
                 <div className="text-center">
                   <Mail className="mx-auto h-12 w-12 text-indigo-600" />
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="mt-2 text-sm text-gray-600">
                     We've sent a verification code to <strong>{email}</strong>
                   </p>
                 </div>
@@ -276,7 +266,7 @@ export default function SignupPage() {
                   />
                 </div>
                 {timeRemaining > 0 && (
-                  <small className="text-center block text-gray-500 dark:text-gray-400">
+                  <small className="text-center block text-gray-500">
                     Code expires in: <span className="font-mono">{formatTime(timeRemaining)}</span>
                   </small>
                 )}
@@ -315,8 +305,8 @@ export default function SignupPage() {
                   <CheckCircle className="mx-auto h-16 w-16 text-green-600 relative z-10" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Account Created Successfully!</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Redirecting to login page...</p>
+                  <h3 className="text-lg font-semibold text-gray-900">Account Created Successfully!</h3>
+                  <p className="text-sm text-gray-600 mt-2">Redirecting to login page...</p>
                 </div>
               </div>
             )}
@@ -340,10 +330,10 @@ export default function SignupPage() {
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+              <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400">Or continue with</span>
+              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
             </div>
           </div>
 

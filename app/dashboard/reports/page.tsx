@@ -34,6 +34,16 @@ const formatCurrency = (amount: number): string => {
   return `${symbol}${formatted}`;
 };
 
+// Format USD currency
+const formatCurrencyUSD = (amount: number): string => {
+  const symbol = '$';
+  const formatted = amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  return `${symbol}${formatted}`;
+};
+
 export default function ReportsPage() {
    const router = useRouter();
    const { theme } = useTheme();
@@ -149,6 +159,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD(totalIncome / USD_TO_PHP)}</div>
               <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
@@ -159,6 +170,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD(totalExpenses / USD_TO_PHP)}</div>
               <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
@@ -169,6 +181,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalIncome - totalExpenses)}</div>
+              <div className="text-sm text-muted-foreground">{formatCurrencyUSD((totalIncome - totalExpenses) / USD_TO_PHP)}</div>
               <p className="text-sm text-gray-500">This Month</p>
             </CardContent>
           </Card>
