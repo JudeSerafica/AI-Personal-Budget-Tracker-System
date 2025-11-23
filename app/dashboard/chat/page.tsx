@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Message {
   id: string;
@@ -35,6 +36,8 @@ export default function ChatPage() {
    const [transactions, setTransactions] = useState<any[]>([]);
    const [isTyping, setIsTyping] = useState(false);
    const [sidebarOpen, setSidebarOpen] = useState(false);
+   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
    const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,7 +280,8 @@ export default function ChatPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteChat(chat.id);
+                            setChatToDelete(chat.id);
+                            setDeleteDialogOpen(true);
                           }}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-opacity"
                           title="Delete chat"
@@ -404,6 +408,32 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this chat? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (chatToDelete) {
+                  deleteChat(chatToDelete);
+                  setChatToDelete(null);
+                }
+                setDeleteDialogOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
