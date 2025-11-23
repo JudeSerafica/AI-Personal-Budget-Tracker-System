@@ -26,7 +26,8 @@ interface Transaction {
 
 import { predefinedCategories } from '@/lib/categories';
 
-const categories = predefinedCategories;
+const expenseCategories = ['Food & Dining', 'Transportation', 'Housing', 'Utilities', 'Healthcare', 'Entertainment', 'Shopping', 'Education', 'Travel', 'Personal Care', 'Insurance', 'Debt Payments', 'Other'];
+const incomeCategories = ['Income', 'Investments', 'Savings', 'Other'];
 
 export default function TransactionsPage() {
    const router = useRouter();
@@ -45,6 +46,8 @@ export default function TransactionsPage() {
     type: 'expense',
     date: new Date().toISOString().split('T')[0]
   });
+
+  const availableCategories = formData.type === 'income' ? incomeCategories : expenseCategories;
 
   // Currency conversion rates (approximate)
   const USD_TO_PHP = 56.5; // 1 USD = 56.5 PHP
@@ -398,7 +401,7 @@ export default function TransactionsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="type">Type</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+                <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value, category: '' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -459,7 +462,7 @@ export default function TransactionsPage() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {availableCategories.map((category) => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
