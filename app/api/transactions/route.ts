@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
-      .eq('userId', user.id)
+      .eq('user_id', user.id)
       .order('date', { ascending: false });
 
     if (error) {
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     const transactionData = {
-      userId: user.id,
+      user_id: user.id,
       amount: parseFloat(amount),
       description,
       category,

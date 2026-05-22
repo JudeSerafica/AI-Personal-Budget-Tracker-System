@@ -48,7 +48,7 @@ export async function PUT(
         date: date ? new Date(date).toISOString() : undefined,
       })
       .eq('id', params.id)
-      .eq('userId', user.id)
+      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -102,7 +102,7 @@ export async function DELETE(
       .from('transactions')
       .delete()
       .eq('id', params.id)
-      .eq('userId', user.id);
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error deleting transaction:', error);

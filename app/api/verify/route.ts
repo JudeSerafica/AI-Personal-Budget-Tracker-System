@@ -30,15 +30,38 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ Found verification code for:', email, 'Code:', storedData.code);
-    console.log('⏰ Stored expiry:', storedData.expires_at);
-    console.log('⏰ Current time:', new Date().toISOString());
-    console.log('⏰ Stored expiry date object:', new Date(storedData.expires_at));
-    console.log('⏰ Current date object:', new Date());
-    console.log('⏰ Is expired?', new Date() > new Date(storedData.expires_at));
+    console.log('⏰ Stored expiry:', storedData.expires_at, 'Type:', typeof storedData.expires_at);
 
-    // Compare times in UTC to avoid timezone issues
+    // Parse the expiry time - handle different formats
+    let expiryTime: Date;
+    try {
+      if (typeof storedData.expires_at === 'string') {
+        // If it's a string, parse it directly
+        expiryTime = new Date(storedData.expires_at);
+      } else if (typeof storedData.expires_at === 'number') {
+        // If it's a timestamp number, use it directly
+        expiryTime = new Date(storedData.expires_at);
+      } else if (storedData.expires_at instanceof Date) {
+        // If it's already a Date object, use it
+        expiryTime = storedData.expires_at;
+      } else {
+        // Try to convert to string and parse
+        expiryTime = new Date(String(storedData.expires_at));
+      }
+
+      // Validate the date
+      if (isNaN(expiryTime.getTime())) {
+        throw new Error('Invalid date format');
+      }
+    } catch (dateError) {
+      console.error('❌ Error parsing expiry time:', dateError);
+      return NextResponse.json(
+        { error: 'Invalid verification data. Please request a new code.' },
+        { status: 400 }
+      );
+    }
+
     const now = new Date();
-    const expiryTime = new Date(storedData.expires_at + (storedData.expires_at.endsWith('Z') ? '' : 'Z'));
 
     console.log('⏰ Comparison details:');
     console.log('  Now (UTC):', now.toISOString());
@@ -48,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     if (now > expiryTime) {
       // Clean up expired code
+      console.log('⏰ Code has expired, deleting...');
       await supabase.from('email_verifications').delete().eq('email', email);
       return NextResponse.json(
         { error: 'Verification code has expired. Please request a new one.' },
@@ -56,6 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (storedData.code !== code) {
+      console.log('❌ Code mismatch. Expected:', storedData.code, 'Got:', code);
       return NextResponse.json(
         { error: 'Invalid verification code' },
         { status: 400 }
